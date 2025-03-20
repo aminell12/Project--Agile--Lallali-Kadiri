@@ -1,53 +1,37 @@
-from behave import given, when, then
+import unittest
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from package.JeuVideo import JeuVideo
 from package.Developpeur import Developpeur
 
-@given('un nouveau jeu "{titre}" de genre "{genre}"')
-def step_impl(context, titre, genre):
-    context.jeu = JeuVideo(titre, genre)
+class TestJeuVideo(unittest.TestCase):
+	def setUp(self):
+		self.jeu1 = JeuVideo("CyberGame", "Action")
+		self.jeu2 = JeuVideo("MagicQuest", "RPG")
+		self.dev = Developpeur("Alice", "Action")
+		self.jeu1.attribuer_developpeur(self.dev)
+		self.jeu2.attribuer_developpeur(self.dev)
 
-@then('le jeu doit avoir le titre "{titre}"')
-def step_impl(context, titre):
-    assert context.jeu.get_titre() == titre
+	def test_accesseurs(self):
+		self.assertEqual(self.jeu1.get_titre(), "CyberGame")
+		self.assertEqual(self.jeu1.get_genre(), "Action")
 
-@then('le jeu doit avoir le genre "{genre}"')
-def step_impl(context, genre):
-    assert context.jeu.get_genre() == genre
+	def test_changement_genre(self):
+		self.jeu1.changer_genre("RPG")
+		self.assertEqual(self.jeu1.get_genre(), "RPG")
 
-@when('on change le genre du jeu en "{nouveau_genre}"')
-def step_impl(context, nouveau_genre):
-    context.jeu.changer_genre(nouveau_genre)
+	def test_description_dev(self):
+		self.assertEqual(self.dev.description(), "Alice développe les jeux suivants : CyberGame, MagicQuest.")
 
-@given('un jeu "{titre}" de genre "{genre}"')
-def step_impl(context, titre, genre):
-    if not hasattr(context, 'jeux'):
-        context.jeux = []
-    jeu = JeuVideo(titre, genre)
-    context.jeux.append(jeu)
+	def test_ajout_jeu_au_developpeur(self):
+		jeu3 = JeuVideo("SpaceWar", "Shooter")
+		self.dev.ajouter_jeu(jeu3)
+		self.assertIn(jeu3, self.dev.jeux)
 
-@given('un développeur "{nom}" spécialisé en "{specialite}"')
-def step_impl(context, nom, specialite):
-    context.dev = Developpeur(nom, specialite)
+	def test_developpeur_sans_jeu(self):
+		dev_sans_jeu = Developpeur("Bob", "FPS")
+		self.assertEqual(dev_sans_jeu.description(), "Bob n'a pas encore de projet attribué.")
 
-@when('le développeur est attribué au jeu')
-def step_impl(context):
-    context.jeu.attribuer_developpeur(context.dev)
 
-@then('le jeu doit être associé au développeur "{nom}"')
-def step_impl(context, nom):
-    assert context.jeu.developpeur.nom == nom
-
-@then('le développeur doit lister "{titre}" parmi ses jeux')
-def step_impl(context, titre):
-    jeux_titres = [jeu.get_titre() for jeu in context.dev.jeux]
-    assert titre in jeux_titres
-
-@when('ces jeux sont attribués au développeur')
-def step_impl(context):
-    for jeu in context.jeux:
-        context.dev.ajouter_jeu(jeu)
-
-@then('la description du développeur doit mentionner "{description}"')
-def step_impl(context, description):
-    description_attendue = context.dev.description()
-    assert description_attendue == description, f"Attendu: {description}, Obtenu: {description_attendue}"
+if __name__ == "__main__":
+	unittest.main()
